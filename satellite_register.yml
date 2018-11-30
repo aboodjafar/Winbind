@@ -1,0 +1,184 @@
+---
+- hosts: satellite_registration
+#  vars:
+#     password: !vault |
+#          $ANSIBLE_VAULT;1.1;AES256
+#          62616139653662636339346338356436386431366665383335353035633562313838313961383234
+#          3338636335373137323236653135626332656261646565350a313664323233336262653566643738
+#          39316437313533343536626130303837343363663965623932623439303936393933386634636162
+#          3832353661663764300a316663306236623562386433376439643038643261643834343638306330
+#          61306339626233653762373138333334663165646438616431346262343563316132
+  tasks:
+
+   - name: Update hostname
+     hostname:
+        name: "{{ ansible_fqdn }}"
+
+   - name: Get SSL certificate
+     get_url:
+       url: https://ua0lrhsat100.ace.aaaclubnet.com/pub/RHN-ORG-TRUSTED-SSL-CERT
+       dest: /usr/share/rhn
+       validate_certs: False
+     tags: register
+
+   - name: Add an entry in up2date file
+     lineinfile:
+        path: /etc/sysconfig/rhn/up2date
+        regexp: '^serverURL'
+        line: 'serverURL=https://ua0lrhsat100.ace.aaaclubnet.com/XMLRPC'
+        state: present
+     tags: register
+
+   - name: Register server to RedHat Satellite
+     shell: "rhnreg_ks --username=tid00169 --password=L3tsMak3AC0mput3r! --force"
+
+   - name: Install packages
+     yum:
+       name: "{{ samba }}"
+     vars:
+       samba:
+       - samba-client 
+       - samba-winbind 
+       - samba-winbind-clients 
+       - krb5-workstation 
+       - ntp
+     ignore_errors: yes
+
+   - shell: yum install -y samba-client samba-winbind samba-winbind-clients krb5-workstation ntp
+     args:
+       warn: false 
+
+#   - name: Disable public NTP pools
+#     lineinfile:
+#       path: /etc/ntp.conf
+#       regexp: '^server 0.rhel.pool.ntp.org iburst'
+#       line: '#server 0.rhel.pool.ntp.org iburst'
+#   - lineinfile:
+#       path: /etc/ntp.conf
+#       regexp: '^server 1.rhel.pool.ntp.org iburst'
+#       line: '#server 1.rhel.pool.ntp.org iburst'
+#   - lineinfile:
+#       path: /etc/ntp.conf
+#       regexp: '^server 2.rhel.pool.ntp.org iburst'
+#       line: '#server 2.rhel.pool.ntp.org iburst'
+#   - lineinfile:
+#       path: /etc/ntp.conf
+#       regexp: '^server 3.rhel.pool.ntp.org iburst'
+#       line: '#server 3.rhel.pool.ntp.org iburst'
+
+#   - name: Configure NTP
+#     lineinfile:
+#       path: /etc/ntp.conf
+#       insertafter: '^#server 3.rhel.pool.ntp.org iburst'
+#       line: '{{ item }}'
+#     with_items:
+#       - 'server sa0dc101.ace.aaaclubnet.com'
+#       - 'server sa0dc102.ace.aaaclubnet.com'
+#       - 'server sa0dc104.ace.aaaclubnet.com'
+
+   - name: Configure NTP
+     template: 
+       src: /var/lib/awx/projects/rhel_server_registration/ntp.j2
+       dest: /etc/ntp.conf
+       owner: root
+       group: root
+       mode: 0644
+       backup: yes
+
+   - name: Restart NTP service
+     service:
+       name: ntpd
+       state: restarted
+       enabled: yes
+
+#   - name: Take backup of samba config
+#     shell: mv /etc/samba/smb.conf /etc/samba/smb.conf.bkup
+
+#   - name: Create new samba config file
+#     file:
+#       path: /etc/samba/smb.conf
+#       state: touch
+#       mode: 0644
+
+#   - name: Configure samba
+#     lineinfile:
+#       path: /etc/samba/smb.conf
+#       line: '{{ item }}'
+#     with_items:
+#       - '[global]'
+#       -          'workgroup = APPDEV'
+#       -          'password server = SA4ADC600.aceclublab.com'
+#       -          'realm = ACECLUBLAB.COM'
+#       -          'security = ads'
+#       -          'idmap config * : range = 16777216-33554431'
+#       -          'winbind separator = +'
+#       -          'template shell = /bin/bash'
+#       -          'winbind use default domain = true'
+#       -          'winbind offline logon = false'
+
+
+#       -          'passdb backend = tdbsam'
+#       -          'Server string = Samba Server Version %v'
+#       -          'log file = /var/log/samba/log.%m'
+#       -          'max log size = 50'
+
+#       - '[homes]'
+#       -          'comment = Home Directories'
+#       -          'browseable = no'
+#       -          'writable = yes'
+
+   
+     
+
+#   - name: Take backup of krb5 config file
+#     shell: mv /etc/krb5.conf /etc/krb5.conf.bkup
+
+#   - name: Create new krb5 config file
+#     file:
+#       path: /etc/krb5.conf
+#       state: touch
+#       mode: 0644
+
+#   - name: Configure Kerberos
+#     lineinfile:
+#       path: /etc/krb5.conf
+#       line: '{{ item }}'
+#     with_items:
+#       - '# Configuration snippets may be placed in this directory as well'
+#       - 'includedir /etc/krb5.conf.d/'
+#       - '[logging]'
+#       - ' default = FILE:/var/log/krb5libs.log'
+#       - ' kdc = FILE:/var/log/krb5kdc.log'
+#       - ' admin_server = FILE:/var/log/kadmind.log'
+
+#       - '[libdefaults]'
+#       - ' dns_lookup_realm = false'
+#       - ' ticket_lifetime = 24h'
+#       - ' renew_lifetime = 7d'
+#       - ' forwardable = true'
+#       - ' rdns = false'
+#       - ' default_realm = ACECLUBLAB.COM'
+#       - ' default_ccache_name = KEYRING:persistent:%{uid}'
+
+#       - '[realms]'
+#       - 'ACECLUBLAB.COM = {'
+#       - '  kdc = SA4ADC600.aceclublab.com'
+#       - '  admin_server = SA4ADC600.aceclublab.com'
+#       - '}'
+#       - '[domain_realm]'
+#       - '.aceclublab.com = ACECLUBLAB.COM'
+#       - 'aceclublab.com = ACECLUBLAB.COM'
+
+   - name: Join AD
+     shell: net ads join -e -U appdev\\tid00169%"{{ password }}" 
+     register: ansible_password
+   - debug: var=ansible_password
+
+   - name: Restart winbind
+     service:
+       name: winbind
+       state: restarted
+       enabled: yes
+
+   - name: Enable winbind
+     shell: authconfig --enablewinbind --enablewinbindauth  --enablemkhomedir --update
