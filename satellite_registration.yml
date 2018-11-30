@@ -8,7 +8,7 @@
 
    - name: Get SSL certificate
      get_url:
-       url: https://ua0lrhsat100.ace.aaaclubnet.com/pub/RHN-ORG-TRUSTED-SSL-CERT
+       url: https://SatelliteFQDN/pub/RHN-ORG-TRUSTED-SSL-CERT
        dest: /usr/share/rhn
        validate_certs: False
 
@@ -16,11 +16,11 @@
      lineinfile:
         path: /etc/sysconfig/rhn/up2date
         regexp: '^serverURL'
-        line: 'serverURL=https://ua0lrhsat100.ace.aaaclubnet.com/XMLRPC'
+        line: 'serverURL=https://SatelliteFQDN/XMLRPC'
         state: present
 
    - name: Register server to RedHat Satellite
-     shell: "rhnreg_ks --username=tid00169 --password=L3tsMak3AC0mput3r! --force"
+     shell: "rhnreg_ks --username=usernametologinsatellite --password=password --force"
 
    - name: Install packages
      yum:
@@ -72,7 +72,7 @@
        backup: yes 
      
    - name: Join AD
-     shell: net ads join -e -U appdev\\tid00169%L3tsMak3AC0mput3r! 
+     shell: net ads join -e -U appdev\\username%password 
      register: ansible_password
    - debug: var=ansible_password
 
