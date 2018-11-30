@@ -11,14 +11,14 @@ includedir /etc/krb5.conf.d/
  renew_lifetime = 7d
  forwardable = true
  rdns = false
- default_realm = ACECLUBLAB.COM
+ default_realm = DOMAIN_NAME
  default_ccache_name = KEYRING:persistent:%{uid}
 
 [realms]
 ACECLUBLAB.COM = {
-  kdc = SA4ADC600.aceclublab.com
-  admin_server = SA4ADC600.aceclublab.com
+  kdc = Domain_controller_FQDN
+  admin_server = Domain_controller_FQDN
 }
 [domain_realm]
-.aceclublab.com = ACECLUBLAB.COM
-aceclublab.com = ACECLUBLAB.COM
+.domain_name.com = DOMAIN_NAME
+domain_name.com = DOMAIN_NAME
